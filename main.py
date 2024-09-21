@@ -23,18 +23,6 @@ def create_board():
     board[3][4], board[4][3] = BLACK, BLACK
     return board
 
-# ボードを表示する
-def print_board(board):
-    symbols = {
-        EMPTY: "□",  # 空
-        BLACK: "○",  # 黒
-        WHITE: "●"   # 白
-    }
-    
-    for row in board:
-        row_symbols = [symbols[cell] for cell in row]
-        print(" ".join(row_symbols))
-
 # 指定した座標がボードの範囲内かどうかをチェック
 def is_on_board(row, col):
     return 0 <= row < 8 and 0 <= col < 8
@@ -79,9 +67,15 @@ def place_and_flip_stones(board, row, col, current_color):
     
     return True
 
+# 現在のプレイヤーがボード上に石を置けるかどうかチェック
 def can_place_stone(board, current_color):
-    return np.any([can_flip(board, row, col, current_color) for row in range(8) for col in range(8)])
+    for row in range(8):
+        for col in range(8):
+            if can_flip(board, row, col, current_color):
+                return True
+    return False
 
+# 現在のプレイヤーが石を置ける全ての有効な場所をリストとして返す
 def find_valid_positions(board, current_color):
     valid_positions = []
     for row in range(8):
@@ -90,13 +84,35 @@ def find_valid_positions(board, current_color):
                 valid_positions.append((row, col))
     return valid_positions
 
+# ボードを表示する
+def print_board(board, valid_positions=None):
+    symbols = {
+        EMPTY: "□",  # 空
+        BLACK: "○",  # 黒
+        WHITE: "●",   # 白
+        "HINT": "⊡"  # 有効な手(ヒント)
+    }
+    
+    for row in range(8):
+        row_symbols = []
+        for col in range(8):
+            if valid_positions and (row, col) in valid_positions:
+                row_symbols.append(symbols["HINT"])
+            else:
+                row_symbols.append(symbols[board[row][col]])
+        print(" ".join(row_symbols))
+
 # ゲーム開始
 def game_loop():
     board = create_board()
     current_color = BLACK  # ゲーム開始は黒から
     
     while True:
-        print_board(board)
+        # 有効な手を取得
+        valid_positions = find_valid_positions(board, current_color)
+
+        # ボードを表示
+        print_board(board, valid_positions)
 
         # 現在のプレイヤーに有効な手がなければターンを交代
         if not can_place_stone(board, current_color):
