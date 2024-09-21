@@ -4,6 +4,7 @@ import numpy as np
 BLACK = 1
 WHITE = -1
 EMPTY = 0
+COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
     (0, 1),   # 右 (Right)
@@ -100,8 +101,10 @@ def print_board(board, valid_positions=None):
                 row_symbols.append(symbols["HINT"])
             else:
                 row_symbols.append(symbols[board[row][col]])
-        print(" ".join(row_symbols))
+        print(" ".join(row_symbols) + f" {row}")
 
+    print(" ".join(COLUMN_LABELS))
+    
 # ゲーム開始
 def game_loop():
     board = create_board()
@@ -129,10 +132,15 @@ def game_loop():
         
         # 有効な手を表示
         valid_positions = find_valid_positions(board, current_color)
-        print(f"有効な手: {', '.join(f'{row}-{col}' for row, col in valid_positions)}")
+        valid_positions_str = [f"{COLUMN_LABELS[col]}-{row}" for row, col in valid_positions]
+        print(f"有効な手: {', '.join(valid_positions_str)}")
+
         
         try:
-            row, col = map(int, input("行と列を入力してください (例: 2-1): ").split('-'))
+            user_input = input("行と列を入力してください (例: A-2): ")
+            col_char, row = user_input.split('-')
+            col = ord(col_char.upper()) - 65  # A-Hを0-7に変換
+            row = int(row)
         except ValueError:
             print("無効な入力です！")
             continue
