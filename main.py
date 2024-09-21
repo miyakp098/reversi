@@ -139,7 +139,7 @@ def game_loop():
         try:
             user_input = input("行と列を入力してください (例: A-2): ")
             col_char, row = user_input.split('-')
-            col = ord(col_char.upper()) - 65  # A-Hを0-7に変換
+            col = COLUMN_LABELS.index(col_char.upper())
             row = int(row)
         except ValueError:
             print("無効な入力です！")
