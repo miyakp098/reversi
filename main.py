@@ -4,6 +4,10 @@ import numpy as np
 BLACK = 1
 WHITE = -1
 EMPTY = 0
+
+PLAYER_NAME_BLACK = "Player1(黒)"
+PLAYER_NAME_WHITE = "Player2(白)"
+
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
@@ -17,154 +21,161 @@ DIRECTIONS = np.array([
     (-1, -1)  # 左上 (Up-left)
 ])
 
-# 8x8のボードの初期状態を作成
-def create_board():
-    board = np.zeros((8, 8), dtype=int)
-    board[3][3], board[4][4] = WHITE, WHITE
-    board[3][4], board[4][3] = BLACK, BLACK
-    return board
+class Board:
+    def __init__(self):
+        self.board = self.create_board()  # ボードの初期化
 
-# 指定した座標がボードの範囲内かどうかをチェック
-def is_on_board(row, col):
-    return 0 <= row < 8 and 0 <= col < 8
+    def create_board(self):
+        # 初期のボード状態を作成
+        board = np.zeros((8, 8), dtype=int)
+        board[3][3], board[4][4] = WHITE, WHITE
+        board[3][4], board[4][3] = BLACK, BLACK
+        return board
 
-# 石を挟める座標リストを取得する
-def get_stones_to_flip(board, row, col, current_color):
-    opponent_color = -current_color
-    stones_to_flip = []
-    
-    for d_row, d_col in DIRECTIONS:
-        n_row, n_col = row + d_row, col + d_col
-        temp_flip = []
-        
-        while is_on_board(n_row, n_col) and board[n_row][n_col] == opponent_color:
-            temp_flip.append((n_row, n_col))
-            n_row += d_row
-            n_col += d_col
-        
-        if is_on_board(n_row, n_col) and board[n_row][n_col] == current_color and temp_flip:
-            stones_to_flip.extend(temp_flip)
-    
-    return stones_to_flip
+    def is_on_board(self, row, col):
+        # 指定した座標がボードの範囲内かどうかをチェック
+        return 0 <= row < 8 and 0 <= col < 8
 
-# 石を挟めるかどうかを確認する
-def can_flip(board, row, col, current_color):
-    if board[row][col] != EMPTY:
-        return False
-    # 挟める石があるか確認
-    return len(get_stones_to_flip(board, row, col, current_color)) > 0
+    def get_stones_to_flip(self, row, col, current_color):
+        # 石を挟める座標リストを取得する
+        opponent_color = -current_color
+        stones_to_flip = []
 
-# 石を置いて反転させる
-def place_and_flip_stones(board, row, col, current_color):
-    stones_to_flip = get_stones_to_flip(board, row, col, current_color)
-    
-    if not stones_to_flip:
-        return False
-    
-    board[row][col] = current_color
-    # 反転させる
-    for flip_row, flip_col in stones_to_flip:
-        board[flip_row][flip_col] = current_color
-    
-    return True
+        for d_row, d_col in DIRECTIONS:
+            n_row, n_col = row + d_row, col + d_col
+            temp_flip = []
 
-# 現在のプレイヤーがボード上に石を置けるかどうかチェック
-def can_place_stone(board, current_color):
-    for row in range(8):
-        for col in range(8):
-            if can_flip(board, row, col, current_color):
-                return True
-    return False
+            while self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == opponent_color:
+                temp_flip.append((n_row, n_col))
+                n_row += d_row
+                n_col += d_col
 
-# 現在のプレイヤーが石を置ける全ての有効な場所をリストとして返す
-def find_valid_positions(board, current_color):
-    valid_positions = []
-    for row in range(8):
-        for col in range(8):
-            if can_flip(board, row, col, current_color):
-                valid_positions.append((row, col))
-    return valid_positions
+            if self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == current_color and temp_flip:
+                stones_to_flip.extend(temp_flip)
 
-# ボードを表示する
-def print_board(board, valid_positions=None):
-    symbols = {
-        EMPTY: "□",  # 空
-        BLACK: "○",  # 黒
-        WHITE: "●",   # 白
-        "HINT": "⊡"  # 有効な手(ヒント)
-    }
-    
-    for row in range(8):
-        row_symbols = []
-        for col in range(8):
-            if valid_positions and (row, col) in valid_positions:
-                row_symbols.append(symbols["HINT"])
+        return stones_to_flip
+
+    def place_and_flip_stones(self, row, col, current_color):
+        # 石を置いて反転させる
+        stones_to_flip = self.get_stones_to_flip(row, col, current_color)
+
+        if not stones_to_flip:
+            return False
+
+        self.board[row][col] = current_color
+        for flip_row, flip_col in stones_to_flip:
+            self.board[flip_row][flip_col] = current_color
+
+        return True
+
+    def find_valid_positions(self, current_color):
+        # 現在のプレイヤーがボード上に石を置けるかどうかチェック
+        valid_positions = []
+        for row in range(8):
+            for col in range(8):
+                if self.can_flip(row, col, current_color):
+                    valid_positions.append((row, col))
+        return valid_positions
+
+    def can_flip(self, row, col, current_color):
+        # 石を挟めるかどうかを確認する
+        if self.board[row][col] != EMPTY:
+            return False
+        return len(self.get_stones_to_flip(row, col, current_color)) > 0
+
+    def print_board(self, valid_positions=None):
+        # ボードを表示する
+        symbols = {
+            EMPTY: "□",  # 空
+            BLACK: "○",  # 黒
+            WHITE: "●",  # 白
+            "HINT": "⊡"  # 有効な手(ヒント)
+        }
+
+        for row in range(8):
+            row_symbols = []
+            for col in range(8):
+                if valid_positions and (row, col) in valid_positions:
+                    row_symbols.append(symbols["HINT"])
+                else:
+                    row_symbols.append(symbols[self.board[row][col]])
+            print(" ".join(row_symbols) + f" {row}")
+
+        print(" ".join(COLUMN_LABELS))
+
+
+class Player:
+    def __init__(self, name, color):
+        self.name = name  # プレイヤー名
+        self.color = color  # プレイヤーの色
+
+    def get_valid_moves(self, board):
+        # 現在のプレイヤーの有効な手を取得
+        return board.find_valid_positions(self.color)
+
+
+class Game:
+    def __init__(self):
+        self.board = Board()  # ボードの作成
+        self.players = [
+            Player(PLAYER_NAME_BLACK, BLACK),
+            Player(PLAYER_NAME_WHITE, WHITE)
+        ]
+        self.current_player_index = 0  # 最初のプレイヤー
+
+    def switch_turn(self):
+        # ターンを交代する
+        self.current_player_index = 1 - self.current_player_index
+
+    def play(self):
+        # ゲームのメインループ
+        while True:
+            current_player = self.players[self.current_player_index]
+            valid_positions = current_player.get_valid_moves(self.board)
+            self.board.print_board(valid_positions)
+
+            if not valid_positions:
+                print(f"{current_player.name} has no valid moves.")
+                self.switch_turn()
+                if not self.players[1 - self.current_player_index].get_valid_moves(self.board):
+                    print("ゲーム終了！")
+                    break
+                continue
+
+            print(f"\n{current_player.name}のターンです:")
+            valid_positions_str = [f"{COLUMN_LABELS[col]}-{row}" for row, col in valid_positions]
+            print(f"有効な手: {', '.join(valid_positions_str)}")
+
+            try:
+                user_input = input("列と行を入力してください (例: A-2): ")
+                col_char, row = user_input.split('-')
+                col = COLUMN_LABELS.index(col_char.upper())
+                row = int(row)
+            except (ValueError, IndexError):
+                print("無効な入力です！")
+                continue
+
+            if self.board.is_on_board(row, col) and self.board.place_and_flip_stones(row, col, current_player.color):
+                self.switch_turn()
             else:
-                row_symbols.append(symbols[board[row][col]])
-        print(" ".join(row_symbols) + f" {row}")
+                print("無効な手です。もう一度試してください！")
 
-    print(" ".join(COLUMN_LABELS))
-    
-# ゲーム開始
-def game_loop():
-    board = create_board()
-    current_color = BLACK  # ゲーム開始は黒から
-    
-    while True:
-        # 有効な手を取得
-        valid_positions = find_valid_positions(board, current_color)
+        # 結果の表示
+        self.board.print_board()
+        black_count = np.sum(self.board.board == BLACK)
+        white_count = np.sum(self.board.board == WHITE)
 
-        # ボードを表示
-        print_board(board, valid_positions)
-
-        # 現在のプレイヤーに有効な手がなければターンを交代
-        if not can_place_stone(board, current_color):
-            print(f"{'黒' if current_color == BLACK else '白'}は有効な手がありません")
-            current_color = -current_color
-
-            # 交代後のプレイヤーも有効な手がなければゲーム終了
-            if not can_place_stone(board, current_color):
-                print("ゲーム終了！")
-                break
-            continue
-        
-        print(f"\n{'黒' if current_color == BLACK else '白'}のターンです:")
-        
-        # 有効な手を表示
-        valid_positions = find_valid_positions(board, current_color)
-        valid_positions_str = [f"{COLUMN_LABELS[col]}-{row}" for row, col in valid_positions]
-        print(f"有効な手: {', '.join(valid_positions_str)}")
-
-        
-        try:
-            user_input = input("行と列を入力してください (例: A-2): ")
-            col_char, row = user_input.split('-')
-            col = COLUMN_LABELS.index(col_char.upper())
-            row = int(row)
-        except ValueError:
-            print("無効な入力です！")
-            continue
-
-        if is_on_board(row, col) and place_and_flip_stones(board, row, col, current_color):
-            current_color = -current_color
+        if black_count > white_count:
+            result = f"勝利: {PLAYER_NAME_BLACK}"
+        elif white_count > black_count:
+            result = f"勝利: {PLAYER_NAME_WHITE}"
         else:
-            print("無効な手です。もう一度試してください！")
+            result = "引き分け"
 
-    # ゲーム終了後の結果表示
-    print_board(board)
-    black_count = np.sum(board == BLACK)
-    white_count = np.sum(board == WHITE)
-    
-    # 勝者の判定
-    if black_count > white_count:
-        result = "勝利:黒"
-    elif white_count > black_count:
-        result = "勝利:白"
-    else:
-        result = "引き分け"
+        print(f"最終スコア: {PLAYER_NAME_BLACK} {black_count}, {PLAYER_NAME_WHITE} {white_count}")
+        print(result)
 
-    print(f"最終スコア: 黒 {black_count}, 白 {white_count}")
-    print(result)
 
-# ゲーム開始
-game_loop()
+if __name__ == "__main__":
+    game = Game()  # ゲームを開始
+    game.play()
