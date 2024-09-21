@@ -36,58 +36,56 @@ def print_board(board):
         print(" ".join(row_symbols))
 
 # 指定した座標がボードの範囲内かどうかをチェック
-def is_on_board(x, y):
-    return 0 <= x < 8 and 0 <= y < 8
+def is_on_board(row, col):
+    return 0 <= row < 8 and 0 <= col < 8
 
 # 石を挟めるかどうかを確認する
-def can_flip(board, x, y, current_color):
-    if board[x][y] != EMPTY:
+def can_flip(board, row, col, current_color):
+    if board[row][col] != EMPTY:
         return False
     
     opponent_color = -current_color
-    for dx, dy in DIRECTIONS:
-        nx, ny = x + dx, y + dy
+    for d_row, d_col in DIRECTIONS:
+        n_row, n_col = row + d_row, col + d_col
         stones_to_flip = []
-        while is_on_board(nx, ny) and board[nx][ny] == opponent_color:
-            stones_to_flip.append((nx, ny))
-            nx += dx
-            ny += dy
-        if is_on_board(nx, ny) and board[nx][ny] == current_color and len(stones_to_flip) > 0:
+        while is_on_board(n_row, n_col) and board[n_row][n_col] == opponent_color:
+            stones_to_flip.append((n_row, n_col))
+            n_row += d_row
+            n_col += d_col
+        if is_on_board(n_row, n_col) and board[n_row][n_col] == current_color and len(stones_to_flip) > 0:
             return True
     return False
 
 # 石を置いて反転させる
-def place_and_flip_stones(board, x, y, current_color):
-    if not can_flip(board, x, y, current_color):
+def place_and_flip_stones(board, row, col, current_color):
+    if not can_flip(board, row, col, current_color):
         return False
     
     opponent_color = -current_color
-    board[x][y] = current_color
+    board[row][col] = current_color
     
-    for dx, dy in DIRECTIONS:
-        nx, ny = x + dx, y + dy
+    for d_row, d_col in DIRECTIONS:
+        n_row, n_col = row + d_row, col + d_col
         stones_to_flip = []
-        while is_on_board(nx, ny) and board[nx][ny] == opponent_color:
-            stones_to_flip.append((nx, ny))
-            nx += dx
-            ny += dy
-        if is_on_board(nx, ny) and board[nx][ny] == current_color:
-            for flip_x, flip_y in stones_to_flip:
-                board[flip_x][flip_y] = current_color
+        while is_on_board(n_row, n_col) and board[n_row][n_col] == opponent_color:
+            stones_to_flip.append((n_row, n_col))
+            n_row += d_row
+            n_col += d_col
+        if is_on_board(n_row, n_col) and board[n_row][n_col] == current_color:
+            for flip_row, flip_col in stones_to_flip:
+                board[flip_row][flip_col] = current_color
     return True
 
 def can_place_stone(board, current_color):
-    return np.any([can_flip(board, x, y, current_color) for x in range(8) for y in range(8)])
+    return np.any([can_flip(board, row, col, current_color) for row in range(8) for col in range(8)])
 
 def find_valid_positions(board, current_color):
     valid_positions = []
-    for x in range(8):
-        for y in range(8):
-            if can_flip(board, x, y, current_color):
-                valid_positions.append((x, y))
+    for row in range(8):
+        for col in range(8):
+            if can_flip(board, row, col, current_color):
+                valid_positions.append((row, col))
     return valid_positions
-
-
 
 # ゲーム開始
 def game_loop():
@@ -112,15 +110,15 @@ def game_loop():
         
         # 有効な手を表示
         valid_positions = find_valid_positions(board, current_color)
-        print(f"有効な手: {', '.join(f'{x}-{y}' for x, y in valid_positions)}")
+        print(f"有効な手: {', '.join(f'{row}-{col}' for row, col in valid_positions)}")
         
         try:
-            x, y = map(int, input("行と列を入力してください (例: 2-1): ").split('-'))
+            row, col = map(int, input("行と列を入力してください (例: 2-1): ").split('-'))
         except ValueError:
             print("無効な入力です！")
             continue
 
-        if is_on_board(x, y) and place_and_flip_stones(board, x, y, current_color):
+        if is_on_board(row, col) and place_and_flip_stones(board, row, col, current_color):
             current_color = -current_color
         else:
             print("無効な手です。もう一度試してください！")
@@ -129,9 +127,17 @@ def game_loop():
     print_board(board)
     black_count = np.sum(board == BLACK)
     white_count = np.sum(board == WHITE)
-    print(f"最終スコア: 黒 {black_count}, 白 {white_count}")
-    print("勝利:", "黒" if black_count > white_count else "白" if white_count > black_count else "引き分け")
+    
+    # 勝者の判定
+    if black_count > white_count:
+        result = "勝利:黒"
+    elif white_count > black_count:
+        result = "勝利:白"
+    else:
+        result = "引き分け"
 
+    print(f"最終スコア: 黒 {black_count}, 白 {white_count}")
+    print(result)
 
 # ゲーム開始
 game_loop()
