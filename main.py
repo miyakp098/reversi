@@ -39,41 +39,44 @@ def print_board(board):
 def is_on_board(row, col):
     return 0 <= row < 8 and 0 <= col < 8
 
+# 石を挟める座標リストを取得する
+def get_stones_to_flip(board, row, col, current_color):
+    opponent_color = -current_color
+    stones_to_flip = []
+    
+    for d_row, d_col in DIRECTIONS:
+        n_row, n_col = row + d_row, col + d_col
+        temp_flip = []
+        
+        while is_on_board(n_row, n_col) and board[n_row][n_col] == opponent_color:
+            temp_flip.append((n_row, n_col))
+            n_row += d_row
+            n_col += d_col
+        
+        if is_on_board(n_row, n_col) and board[n_row][n_col] == current_color and temp_flip:
+            stones_to_flip.extend(temp_flip)
+    
+    return stones_to_flip
+
 # 石を挟めるかどうかを確認する
 def can_flip(board, row, col, current_color):
     if board[row][col] != EMPTY:
         return False
-    
-    opponent_color = -current_color
-    for d_row, d_col in DIRECTIONS:
-        n_row, n_col = row + d_row, col + d_col
-        stones_to_flip = []
-        while is_on_board(n_row, n_col) and board[n_row][n_col] == opponent_color:
-            stones_to_flip.append((n_row, n_col))
-            n_row += d_row
-            n_col += d_col
-        if is_on_board(n_row, n_col) and board[n_row][n_col] == current_color and len(stones_to_flip) > 0:
-            return True
-    return False
+    # 挟める石があるか確認
+    return len(get_stones_to_flip(board, row, col, current_color)) > 0
 
 # 石を置いて反転させる
 def place_and_flip_stones(board, row, col, current_color):
-    if not can_flip(board, row, col, current_color):
+    stones_to_flip = get_stones_to_flip(board, row, col, current_color)
+    
+    if not stones_to_flip:
         return False
     
-    opponent_color = -current_color
     board[row][col] = current_color
+    # 反転させる
+    for flip_row, flip_col in stones_to_flip:
+        board[flip_row][flip_col] = current_color
     
-    for d_row, d_col in DIRECTIONS:
-        n_row, n_col = row + d_row, col + d_col
-        stones_to_flip = []
-        while is_on_board(n_row, n_col) and board[n_row][n_col] == opponent_color:
-            stones_to_flip.append((n_row, n_col))
-            n_row += d_row
-            n_col += d_col
-        if is_on_board(n_row, n_col) and board[n_row][n_col] == current_color:
-            for flip_row, flip_col in stones_to_flip:
-                board[flip_row][flip_col] = current_color
     return True
 
 def can_place_stone(board, current_color):
