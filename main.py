@@ -1,13 +1,10 @@
 import numpy as np
 
-# 定数宣言
 BLACK = 1
 WHITE = -1
 EMPTY = 0
-
 PLAYER_NAME_BLACK = "Player1(黒)"
 PLAYER_NAME_WHITE = "Player2(白)"
-
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
@@ -25,19 +22,20 @@ class Board:
     def __init__(self):
         self.board = self.create_board()  # ボードの初期化
 
+    # 初期のボード状態を作成
     def create_board(self):
-        # 初期のボード状態を作成
         board = np.zeros((8, 8), dtype=int)
         board[3][3], board[4][4] = WHITE, WHITE
         board[3][4], board[4][3] = BLACK, BLACK
         return board
 
+    
+    # 指定した座標がボードの範囲内かどうかをチェック
     def is_on_board(self, row, col):
-        # 指定した座標がボードの範囲内かどうかをチェック
         return 0 <= row < 8 and 0 <= col < 8
 
+    # 石を挟める座標リストを取得する
     def get_stones_to_flip(self, row, col, current_color):
-        # 石を挟める座標リストを取得する
         opponent_color = -current_color
         stones_to_flip = []
 
@@ -55,8 +53,8 @@ class Board:
 
         return stones_to_flip
 
+    # 石を置いて反転させる
     def place_and_flip_stones(self, row, col, current_color):
-        # 石を置いて反転させる
         stones_to_flip = self.get_stones_to_flip(row, col, current_color)
 
         if not stones_to_flip:
@@ -68,8 +66,8 @@ class Board:
 
         return True
 
+    # 現在のプレイヤーがボード上に石を置けるかどうかチェック
     def find_valid_positions(self, current_color):
-        # 現在のプレイヤーがボード上に石を置けるかどうかチェック
         valid_positions = []
         for row in range(8):
             for col in range(8):
@@ -77,14 +75,14 @@ class Board:
                     valid_positions.append((row, col))
         return valid_positions
 
+    # 石を挟めるかどうかを確認する
     def can_flip(self, row, col, current_color):
-        # 石を挟めるかどうかを確認する
         if self.board[row][col] != EMPTY:
             return False
         return len(self.get_stones_to_flip(row, col, current_color)) > 0
 
+    # ボードを表示する
     def print_board(self, valid_positions=None):
-        # ボードを表示する
         symbols = {
             EMPTY: "□",  # 空
             BLACK: "○",  # 黒
@@ -109,8 +107,8 @@ class Player:
         self.name = name  # プレイヤー名
         self.color = color  # プレイヤーの色
 
+    # 現在のプレイヤーの有効な手を取得
     def get_valid_moves(self, board):
-        # 現在のプレイヤーの有効な手を取得
         return board.find_valid_positions(self.color)
 
 
@@ -123,19 +121,19 @@ class Game:
         ]
         self.current_player_index = 0  # 最初のプレイヤー
 
+    # ターンを交代する
     def switch_turn(self):
-        # ターンを交代する
         self.current_player_index = 1 - self.current_player_index
 
+    # ゲームのメインループ
     def play(self):
-        # ゲームのメインループ
         while True:
             current_player = self.players[self.current_player_index]
             valid_positions = current_player.get_valid_moves(self.board)
             self.board.print_board(valid_positions)
 
             if not valid_positions:
-                print(f"{current_player.name} has no valid moves.")
+                print(f"{current_player.name}は有効な手がありません。")
                 self.switch_turn()
                 if not self.players[1 - self.current_player_index].get_valid_moves(self.board):
                     print("ゲーム終了！")
