@@ -19,70 +19,33 @@ DIRECTIONS = np.array([
 ])
 
 class Board:
-    def __init__(self):
-        self.board = self.create_board()  # ボードの初期化
+    """ゲームボードを管理するクラス。
 
-    # 初期のボード状態を作成
+    Attributes:
+        board (np.ndarray): ボードの状態を表す2次元配列。
+    """
+
+    def __init__(self):
+        """ボードを初期化し、初期状態を設定する。"""
+        self.board = self.create_board()
+
     def create_board(self):
+        """初期のボード状態を作成。
+
+        Returns:
+            np.ndarray: 初期状態のボード。
+        """
         board = np.zeros((8, 8), dtype=int)
         board[3][3], board[4][4] = WHITE, WHITE
         board[3][4], board[4][3] = BLACK, BLACK
         return board
-
     
-    # 指定した座標がボードの範囲内かどうかをチェック
-    def is_on_board(self, row, col):
-        return 0 <= row < 8 and 0 <= col < 8
-
-    # 石を挟める座標リストを取得する
-    def get_stones_to_flip(self, row, col, current_color):
-        opponent_color = -current_color
-        stones_to_flip = []
-
-        for d_row, d_col in DIRECTIONS:
-            n_row, n_col = row + d_row, col + d_col
-            temp_flip = []
-
-            while self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == opponent_color:
-                temp_flip.append((n_row, n_col))
-                n_row += d_row
-                n_col += d_col
-
-            if self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == current_color and temp_flip:
-                stones_to_flip.extend(temp_flip)
-
-        return stones_to_flip
-
-    # 石を置いて反転させる
-    def place_and_flip_stones(self, row, col, current_color):
-        stones_to_flip = self.get_stones_to_flip(row, col, current_color)
-
-        if not stones_to_flip:
-            return False
-
-        self.board[row][col] = current_color
-        for flip_row, flip_col in stones_to_flip:
-            self.board[flip_row][flip_col] = current_color
-
-        return True
-
-    # 現在のプレイヤーがボード上に石を置けるかどうかチェック
-    def find_valid_positions(self, current_color):
-        valid_positions = []
-        for row in range(8):
-            for col in range(8):
-                if self.can_flip(row, col, current_color):
-                    valid_positions.append((row, col))
-        return valid_positions
-
-    # 石を挟めるかどうかを確認する
-    def can_flip(self, row, col, current_color):
-        if self.board[row][col] != EMPTY:
-            return False
-        return len(self.get_stones_to_flip(row, col, current_color)) > 0
-
-    # ボードを表示する
     def print_board(self, valid_positions=None):
+        """ボードの状態を表示する。
+
+        Args:
+            valid_positions (list, optional): 有効な手の座標リスト。デフォルトはNone。
+        """
         symbols = {
             EMPTY: "□",  # 空
             BLACK: "○",  # 黒
@@ -100,33 +63,157 @@ class Board:
             print(" ".join(row_symbols) + f" {row}")
 
         print(" ".join(COLUMN_LABELS))
+        
+    def find_valid_positions(self, current_color):
+        """現在のプレイヤーが置ける有効な手を全て見つける。
 
+        Args:
+            current_color (int): 現在のプレイヤーの色。
+
+        Returns:
+            list: 有効な手の座標リスト。
+        """
+        valid_positions = []
+        for row in range(8):
+            for col in range(8):
+                if self.can_flip(row, col, current_color):
+                    valid_positions.append((row, col))
+        return valid_positions
+
+    def place_and_flip_stones(self, row, col, current_color):
+        """指定した位置に石を置き、挟む石を反転させる。
+
+        Args:
+            row (int): 行のインデックス。
+            col (int): 列のインデックス。
+            current_color (int): 現在のプレイヤーの色。
+
+        Returns:
+            bool: 石を置いて反転できた場合はTrue、できなかった場合はFalse。
+        """
+        stones_to_flip = self.get_stones_to_flip(row, col, current_color)
+
+        if not stones_to_flip:
+            return False
+
+        self.board[row][col] = current_color
+        for flip_row, flip_col in stones_to_flip:
+            self.board[flip_row][flip_col] = current_color
+
+        return True
+    
+    
+    def can_flip(self, row, col, current_color):
+        """指定した位置で石を挟むことができるか確認する。
+
+        Args:
+            row (int): 行のインデックス。
+            col (int): 列のインデックス。
+            current_color (int): 現在のプレイヤーの色。
+
+        Returns:
+            bool: 石を挟むことができればTrue、そうでなければFalse。
+        """
+        if self.board[row][col] != EMPTY:
+            return False
+        return len(self.get_stones_to_flip(row, col, current_color)) > 0
+    
+    def get_stones_to_flip(self, row, col, current_color):
+        """指定した位置で挟むことができる石のリストを取得。
+
+        Args:
+            row (int): 行のインデックス。
+            col (int): 列のインデックス。
+            current_color (int): 現在のプレイヤーの色。
+
+        Returns:
+            list: 挟むことができる石の座標リスト。
+        """
+        opponent_color = -current_color
+        stones_to_flip = []
+
+        for d_row, d_col in DIRECTIONS:
+            n_row, n_col = row + d_row, col + d_col
+            temp_flip = []
+
+            # 相手の石が連続する限り、石をリストに追加
+            while self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == opponent_color:
+                temp_flip.append((n_row, n_col))
+                n_row += d_row
+                n_col += d_col
+
+            # 相手の石の後に自分の石があれば、それまでの石を全て反転リストに追加
+            if self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == current_color and temp_flip:
+                stones_to_flip.extend(temp_flip)
+
+        return stones_to_flip
+    
+    def is_on_board(self, row, col):
+        """指定した座標がボードの範囲内かどうかをチェック。
+
+        Args:
+            row (int): 行のインデックス。
+            col (int): 列のインデックス。
+
+        Returns:
+            bool: 座標がボード内であればTrue、そうでなければFalse。
+        """
+        return 0 <= row < 8 and 0 <= col < 8
 
 class Player:
-    def __init__(self, name, color):
-        self.name = name  # プレイヤー名
-        self.color = color  # プレイヤーの色
+    """プレイヤーを表すクラス。
 
-    # 現在のプレイヤーの有効な手を取得
+    Attributes:
+        name (str): プレイヤー名。
+        color (int): プレイヤーの色。
+    """
+
+    def __init__(self, name, color):
+        """プレイヤーの名前と色を初期化する。
+
+        Args:
+            name (str): プレイヤー名。
+            color (int): プレイヤーの色。
+        """
+        self.name = name
+        self.color = color
+
     def get_valid_moves(self, board):
+        """現在のプレイヤーの有効な手を取得する。
+
+        Args:
+            board (Board): ゲームボードのインスタンス。
+
+        Returns:
+            list: プレイヤーの有効な手の座標リスト。
+        """
         return board.find_valid_positions(self.color)
 
 
 class Game:
+    """オセロゲームを管理するクラス。
+
+    Attributes:
+        board (Board): ゲームボード。
+        players (list): プレイヤーのリスト。
+        current_player_index (int): 現在のプレイヤーのインデックス。
+    """
+
     def __init__(self):
-        self.board = Board()  # ボードの作成
+        """ゲームを初期化し、ボードとプレイヤーを作成する。"""
+        self.board = Board()
         self.players = [
             Player(PLAYER_NAME_BLACK, BLACK),
             Player(PLAYER_NAME_WHITE, WHITE)
         ]
         self.current_player_index = 0  # 最初のプレイヤー
 
-    # ターンを交代する
     def switch_turn(self):
+        """ターンを交代する。"""
         self.current_player_index = 1 - self.current_player_index
 
-    # ゲームのメインループ
     def play(self):
+        """ゲームのメインループを実行する。"""
         while True:
             current_player = self.players[self.current_player_index]
             valid_positions = current_player.get_valid_moves(self.board)
