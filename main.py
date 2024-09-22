@@ -196,7 +196,7 @@ class Game:
     Attributes:
         board (Board): ゲームボード。
         players (list): プレイヤーのリスト。
-        current_player_index (int): 現在のプレイヤーのインデックス。
+        current_player_color (int): 現在のプレイヤーの色。
     """
 
     def __init__(self):
@@ -206,23 +206,35 @@ class Game:
             Player(PLAYER_NAME_BLACK, BLACK),
             Player(PLAYER_NAME_WHITE, WHITE)
         ]
-        self.current_player_index = 0  # 最初のプレイヤー
+        self.current_player_color = BLACK  # 最初のプレイヤーの色
 
     def switch_turn(self):
         """ターンを交代する。"""
-        self.current_player_index = 1 - self.current_player_index
+        self.current_player_color = WHITE if self.current_player_color == BLACK else BLACK
+
+    def get_current_player(self):
+        """現在のプレイヤーを取得する。
+
+        Returns:
+            Player: 現在のプレイヤー。
+        """
+        for player in self.players:
+            if player.color == self.current_player_color:
+                return player
+        return None
 
     def play(self):
         """ゲームのメインループを実行する。"""
         while True:
-            current_player = self.players[self.current_player_index]
+            current_player = self.get_current_player()
             valid_positions = current_player.get_valid_moves(self.board)
             self.board.print_board(valid_positions)
 
             if not valid_positions:
                 print(f"{current_player.name}は有効な手がありません。")
                 self.switch_turn()
-                if not self.players[1 - self.current_player_index].get_valid_moves(self.board):
+                other_player = self.get_current_player()
+                if not other_player.get_valid_moves(self.board):
                     print("ゲーム終了！")
                     break
                 continue
