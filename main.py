@@ -1,4 +1,7 @@
+import random
 import numpy as np
+from abc import ABC, abstractmethod
+
 
 BLACK = 1
 WHITE = -1
@@ -160,13 +163,8 @@ class Board:
         """
         return 0 <= row < 8 and 0 <= col < 8
 
-class Player:
-    """プレイヤーを表すクラス。
-
-    Attributes:
-        name (str): プレイヤー名。
-        color (int): プレイヤーの色。
-    """
+class Player(ABC):
+    """プレイヤーの抽象クラス。"""
 
     def __init__(self, name, color):
         """プレイヤーの名前と色を初期化する。
@@ -178,34 +176,98 @@ class Player:
         self.name = name
         self.color = color
 
-    def get_valid_moves(self, board):
-        """現在のプレイヤーの有効な手を取得する。
+    @abstractmethod
+    def get_valid_positions(self, board):
+        """プレイヤーの手を取得する。
 
         Args:
-            board (Board): ゲームボードのインスタンス。
+            board (Board): ゲームボード。
 
         Returns:
-            list: プレイヤーの有効な手の座標リスト。
+            tuple: プレイヤーの選択した座標 (row, col)。
         """
-        return board.find_valid_positions(self.color)
+        pass
 
+
+class HumanPlayer(Player):
+    """人間プレイヤーを表すクラス。"""
+
+    def get_valid_positions(self, board):
+        """人間プレイヤーからの手を取得する。
+
+        Args:
+            board (Board): ゲームボード。
+
+        Returns:
+            tuple: プレイヤーの選択した座標 (row, col)。
+        """
+        valid_positions = board.find_valid_positions(self.color)
+        board.print_board(valid_positions)
+
+        print(f"\n{self.name}のターンです:")
+        valid_positions_str = [f"{COLUMN_LABELS[col]}-{row}" for row, col in valid_positions]
+        print(f"有効な手: {', '.join(valid_positions_str)}")
+
+        while True:
+            try:
+                user_input = input("列と行を入力してください (例: A-2): ")
+                col_char, row = user_input.split('-')
+                col = COLUMN_LABELS.index(col_char.upper())
+                row = int(row)
+
+                if board.is_on_board(row, col) and board.place_and_flip_stones(row, col, self.color):
+                    return row, col
+                else:
+                    print("無効な手です。もう一度試してください！")
+            except (ValueError, IndexError):
+                print("無効な入力です！もう一度試してください。")
+                
+                
+class AIPlayer(Player):
+    """AIプレイヤーを表すクラス。"""
+
+    def get_valid_positions(self, board):
+        """AIプレイヤーの手を取得する。
+
+        Args:
+            board (Board): ゲームボード。
+
+        Returns:
+            tuple: AIが選択した座標 (row, col)。
+        """
+        valid_positions = board.find_valid_positions(self.color)
+
+        if not valid_positions:
+            return None, None
+
+        # ランダムに有効な手を選択するAI
+        action = random.choice(valid_positions)
+        board.place_and_flip_stones(action[0], action[1], self.color)
+        print(f"{self.name} (AI) は {COLUMN_LABELS[action[1]]}-{action[0]} に石を置きました。")
+        return action
 
 class Game:
-    """オセロゲームを管理するクラス。
+    """オセロゲームを管理するクラス。"""
 
-    Attributes:
-        board (Board): ゲームボード。
-        players (list): プレイヤーのリスト。
-        current_player_color (int): 現在のプレイヤーの色。
-    """
+    def __init__(self, is_human_vs_ai=True):
+        """ゲームを初期化し、ボードとプレイヤーを作成する。
 
-    def __init__(self):
-        """ゲームを初期化し、ボードとプレイヤーを作成する。"""
+        Args:
+            is_human_vs_ai (bool): 人間対AIでプレイするかどうか。
+        """
         self.board = Board()
-        self.players = [
-            Player(PLAYER_NAME_BLACK, BLACK),
-            Player(PLAYER_NAME_WHITE, WHITE)
-        ]
+
+        if is_human_vs_ai:
+            self.players = [
+                HumanPlayer(PLAYER_NAME_BLACK, BLACK),
+                AIPlayer(PLAYER_NAME_WHITE, WHITE)
+            ]
+        else:
+            self.players = [
+                HumanPlayer(PLAYER_NAME_BLACK, BLACK),
+                HumanPlayer(PLAYER_NAME_WHITE, WHITE)
+            ]
+
         self.current_player_color = BLACK  # 最初のプレイヤーの色
 
     def switch_turn(self):
@@ -227,35 +289,18 @@ class Game:
         """ゲームのメインループを実行する。"""
         while True:
             current_player = self.get_current_player()
-            valid_positions = current_player.get_valid_moves(self.board)
-            self.board.print_board(valid_positions)
+            row, col = current_player.get_valid_positions(self.board)
 
-            if not valid_positions:
+            if row is None:  # プレイヤーが有効な手を持っていない
                 print(f"{current_player.name}は有効な手がありません。")
                 self.switch_turn()
                 other_player = self.get_current_player()
-                if not other_player.get_valid_moves(self.board):
+                if other_player.get_valid_positions(self.board) is None:
                     print("ゲーム終了！")
                     break
                 continue
 
-            print(f"\n{current_player.name}のターンです:")
-            valid_positions_str = [f"{COLUMN_LABELS[col]}-{row}" for row, col in valid_positions]
-            print(f"有効な手: {', '.join(valid_positions_str)}")
-
-            try:
-                user_input = input("列と行を入力してください (例: A-2): ")
-                col_char, row = user_input.split('-')
-                col = COLUMN_LABELS.index(col_char.upper())
-                row = int(row)
-            except (ValueError, IndexError):
-                print("無効な入力です！")
-                continue
-
-            if self.board.is_on_board(row, col) and self.board.place_and_flip_stones(row, col, current_player.color):
-                self.switch_turn()
-            else:
-                print("無効な手です。もう一度試してください！")
+            self.switch_turn()
 
         # 結果の表示
         self.board.print_board()
@@ -274,5 +319,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game()  # ゲームを開始
+    game = Game(is_human_vs_ai=False)  # 人間 vs AI ゲームを開始
     game.play()
