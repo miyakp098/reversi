@@ -226,6 +226,18 @@ class HumanPlayer(Player):
 class AIPlayer(Player):
     """AIプレイヤーを表すクラス。"""
 
+    # 8x8の優先度マトリクス（数字が大きいほど優先度が高い）
+    PRIORITY_MATRIX = [
+        [9, 1, 5, 5, 5, 5, 1, 9],
+        [1, 0, 3, 3, 3, 3, 0, 1],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [1, 0, 3, 3, 3, 3, 0, 1],
+        [9, 1, 5, 5, 5, 5, 1, 9]
+    ]
+
     def get_valid_positions(self, board):
         """AIプレイヤーの手を取得する。
 
@@ -240,11 +252,27 @@ class AIPlayer(Player):
         if not valid_positions:
             return None, None
 
-        # ランダムに有効な手を選択するAI
-        action = random.choice(valid_positions)
-        board.place_and_flip_stones(action[0], action[1], self.color)
-        print(f"{self.name} (AI) は {COLUMN_LABELS[action[1]]}-{action[0]} に石を置きました。")
-        return action
+        # 優先度が最も高い位置を選ぶためのリストを用意
+        best_positions = []
+        highest_priority = -1
+
+        # 各位置の優先度を確認して、同じ優先度の手をリストに追加
+        for position in valid_positions:
+            row, col = position
+            priority = self.PRIORITY_MATRIX[row][col]
+            if priority > highest_priority:
+                highest_priority = priority
+                best_positions = [position]  # 新しい最高優先度が見つかったらリストをリセット
+            elif priority == highest_priority:
+                best_positions.append(position)  # 同じ優先度ならリストに追加
+
+        # 複数の最高優先度の手からランダムに選ぶ
+        best_position = random.choice(best_positions)
+
+        # 選択された手をボードに反映
+        board.place_and_flip_stones(best_position[0], best_position[1], self.color)
+        print(f"{self.name} (AI) は {COLUMN_LABELS[best_position[1]]}-{best_position[0]} に石を置きました。")
+        return best_position
 
 class Game:
     """オセロゲームを管理するクラス。"""
@@ -319,5 +347,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game(is_human_vs_ai=False)  # 人間 vs AI ゲームを開始
+    game = Game(is_human_vs_ai=True)  # 人間 vs AI ゲームを開始
     game.play()
