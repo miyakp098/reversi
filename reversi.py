@@ -204,6 +204,9 @@ class HumanPlayer(Player):
         valid_positions = board.find_valid_positions(self.color)
         board.print_board(valid_positions)
 
+        if not valid_positions:
+            return None, None
+
         print(f"\n{self.name}のターンです:")
         valid_positions_str = [f"{COLUMN_LABELS[col]}-{row}" for row, col in valid_positions]
         print(f"有効な手: {', '.join(valid_positions_str)}")
@@ -317,13 +320,12 @@ class Game:
         """ゲームのメインループを実行する。"""
         while True:
             current_player = self.get_current_player()
-            row, col = current_player.get_valid_positions(self.board)
 
-            if row is None:  # プレイヤーが有効な手を持っていない
+            if current_player.get_valid_positions(self.board) == (None, None):
                 print(f"{current_player.name}は有効な手がありません。")
                 self.switch_turn()
                 other_player = self.get_current_player()
-                if other_player.get_valid_positions(self.board) is None:
+                if other_player.get_valid_positions(self.board) == (None, None):
                     print("ゲーム終了！")
                     break
                 continue
