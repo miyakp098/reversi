@@ -6,8 +6,9 @@ from abc import ABC, abstractmethod
 BLACK = 1
 WHITE = -1
 EMPTY = 0
-player_name_black = "Player1"
-player_name_white = "Player2"
+HUMAN_PLAYER_NAME = "HumanPlayer"
+EASY_AI_PLAYER_NAME = "EasyAIPlayer"
+HARD_AI_PLAYER_NAME = "HardAIPlayer"
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
@@ -312,81 +313,80 @@ class Game:
     def __init__(self):
         """ゲームを初期化し、ボードとプレイヤーを作成する。"""
         self.board = Board()
-        
-        # プレイヤーの組み合わせを決定する前に、ユーザーに選択肢を提示
-        human_vs_human = input("人間同士でプレイしますか？ (Y/N): ").strip().upper()
-        
-        if human_vs_human == 'Y':            
-            self.player_name_black = "HumanPlayer1"
-            self.player_name_white = "HumanPlayer2"
+        self.current_player_color = BLACK  # 最初のプレイヤーの色
+
+        self.set_players()
+
+    def set_players(self):
+        """プレイヤーの設定を行う。"""
+        game_mode = input("ゲームモードを選んでください:\n1: 人間同士\n2: 人間対AI\n3: AI対AI\n選択肢の番号を入力してください: ").strip()
+
+        if game_mode == '1':
+            self.setup_human_vs_human()
+        elif game_mode == '2':
+            self.setup_human_vs_ai()
+        elif game_mode == '3':
+            self.setup_ai_vs_ai()
+        else:
+            print("無効な選択です。デフォルトでAI対AIのモードになります。")
+            self.setup_ai_vs_ai()
+
+    def setup_human_vs_human(self):
+        """人間同士のプレイヤーを設定する。"""
+        player_name_black = f"{HUMAN_PLAYER_NAME}1"
+        player_name_white = f"{HUMAN_PLAYER_NAME}2"
+        self.players = [
+            HumanPlayer(player_name_black, BLACK),
+            HumanPlayer(player_name_white, WHITE)
+        ]
+
+    def setup_human_vs_ai(self):
+        """人間対AIのプレイヤーを設定する。"""
+        player_name_black = "HumanPlayer"
+        ai_level = input("AIレベルを選んでください: \n1: Easy AI\n2: Hard AI\n選択肢の番号を入力してください: ").strip()
+
+        if ai_level == '1':
+            player_name_white = EASY_AI_PLAYER_NAME
             self.players = [
-                HumanPlayer(self.player_name_black, BLACK),
-                HumanPlayer(self.player_name_white, WHITE)
+                HumanPlayer(player_name_black, BLACK),
+                EasyAIPlayer(player_name_white, WHITE)
             ]
-            self.current_player_color = BLACK  # 最初のプレイヤーの色
-            return
-            
-        human_vs_ai = input("AIとプレイしますか？ (Y/N): ").strip().upper()
-        if human_vs_ai == 'Y':
-            self.player_name_black = "HumanPlayer"
-            # 人間対AIまたはAI対AIの設定を行う
-            print("AIレベルを選んでください: ")
-            print("1: Easy AI (白)")
-            print("2: Hard AI (白)")            
-            
-            choice = input("選択肢の番号を入力してください: ").strip()
-            
-            if choice == '1':
-                self.player_name_white = "EasyAIPlayer"
-                self.players = [
-                    HumanPlayer(self.player_name_black, BLACK),
-                    EasyAIPlayer(self.player_name_white, WHITE)
-                ]
-            elif choice == '2':
-                self.player_name_white = "HardAIPlayer"
-                self.players = [
-                    HumanPlayer(self.player_name_black, BLACK),
-                    HardAIPlayer(self.player_name_white, WHITE)
-                ]
-            else:
-                print("無効な選択です。デフォルトで人間対Easy AIでプレイします。")
-                self.player_name_white = "EasyAIPlayer"
-                self.players = [
-                    HumanPlayer(self.player_name_black, BLACK),
-                    EasyAIPlayer(self.player_name_white, WHITE)
-                ]
-            self.current_player_color = BLACK  # 最初のプレイヤーの色
-            return
-        
-         
-        # 人間対AIまたはAI対AIの設定を行う
-        print("AIレベルを選んでください: ")
-        print("1: EasyAI vs EasyAI")
-        print("2: EasyAI vs HardAI")            
-        choice = input("選択肢の番号を入力してください: ").strip()
-        if choice == '1':
-            self.player_name_black = "EasyAIPlayer1"
-            self.player_name_white = "EasyAIPlayer2"
+        elif ai_level == '2':
+            player_name_white = HARD_AI_PLAYER_NAME
             self.players = [
-                EasyAIPlayer(self.player_name_black, BLACK),
-                EasyAIPlayer(self.player_name_white, WHITE)
-            ]
-        elif choice == '2':
-            self.player_name_black = "HardAIPlayer"
-            self.player_name_white = "EasyAIPlayer"
-            self.players = [
-                HardAIPlayer(self.player_name_black, BLACK),
-                EasyAIPlayer(self.player_name_white, WHITE)
+                HumanPlayer(player_name_black, BLACK),
+                HardAIPlayer(player_name_white, WHITE)
             ]
         else:
-            print("無効な選択です。HardAI対HardAIでプレイします。")
-            self.player_name_black = "HardAIPlayer1"
-            self.player_name_white = "HardAIPlayer2"
+            print("無効な選択です。デフォルトでEasy AIが選ばれます。")
+            self.setup_human_vs_ai()
+
+    def setup_ai_vs_ai(self):
+        """AI同士のプレイヤーを設定する。"""
+        ai_level = input(f"AIレベルを選んでください: \n1: Easy AI\n2: Hard AI\n選択肢の番号を入力してください: ").strip()
+
+        if ai_level == '1':
+            player_name_black = f"{EASY_AI_PLAYER_NAME}1"
+            player_name_white = f"{EASY_AI_PLAYER_NAME}2"
             self.players = [
-                HardAIPlayer(self.player_name_black, BLACK),
-                HardAIPlayer(self.player_name_white, WHITE)
+                EasyAIPlayer(player_name_black, BLACK),
+                EasyAIPlayer(player_name_white, WHITE)
             ]
-        self.current_player_color = BLACK  # 最初のプレイヤーの色
+        elif ai_level == '2':
+            player_name_black = HARD_AI_PLAYER_NAME
+            player_name_white = EASY_AI_PLAYER_NAME
+            self.players = [
+                HardAIPlayer(player_name_black, BLACK),
+                EasyAIPlayer(player_name_white, WHITE)
+            ]
+        else:
+            print("無効な選択です。デフォルトでHard AI同士が選ばれます。")
+            player_name_black = f"{HARD_AI_PLAYER_NAME}2"
+            player_name_white = f"{HARD_AI_PLAYER_NAME}2"
+            self.players = [
+                HardAIPlayer(player_name_black, BLACK),
+                HardAIPlayer(player_name_white, WHITE)
+            ]            
 
     def switch_turn(self):
         """ターンを交代する。"""
@@ -398,10 +398,7 @@ class Game:
         Returns:
             Player: 現在のプレイヤー。
         """
-        for player in self.players:
-            if player.color == self.current_player_color:
-                return player
-        return None
+        return next(player for player in self.players if player.color == self.current_player_color)
 
     def play(self):
         """ゲームのメインループを実行する。"""
@@ -411,27 +408,33 @@ class Game:
             if current_player.get_valid_positions(self.board) == (None, None):
                 print(f"{current_player.name}は有効な手がありません。")
                 self.switch_turn()
-                other_player = self.get_current_player()
-                if other_player.get_valid_positions(self.board) == (None, None):
+                if self.get_current_player().get_valid_positions(self.board) == (None, None):
                     print("ゲーム終了！")
                     break
                 continue
 
             self.switch_turn()
 
-        # 結果の表示
+        self.show_result()
+
+    def show_result(self):
+        """ゲーム結果を表示する。"""
         self.board.print_board()
         black_count = np.sum(self.board.board == BLACK)
         white_count = np.sum(self.board.board == WHITE)
 
+        # プレイヤーの名前を取得
+        player_name_black = self.players[0].name
+        player_name_white = self.players[1].name
+
         if black_count > white_count:
-            result = f"勝利: {self.player_name_black}"
+            result = f"勝利: {player_name_black}"
         elif white_count > black_count:
-            result = f"勝利: {self.player_name_white}"
+            result = f"勝利: {player_name_white}"
         else:
             result = "引き分け"
 
-        print(f"最終スコア: {self.player_name_black} {black_count}個, {self.player_name_white} {white_count}個")
+        print(f"最終スコア: {player_name_black} {black_count}個, {player_name_white} {white_count}個")
         print(result)
 
 
