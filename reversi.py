@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 BLACK = 1
 WHITE = -1
 EMPTY = 0
-PLAYER_NAME_BLACK = "Player1(黒)"
+PLAYER_NAME_BLACK = "Player1(黒)" #TODO: 定数ではない
 PLAYER_NAME_WHITE = "Player2(白)"
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
@@ -231,14 +231,14 @@ class AIPlayer(Player):
 
     # 8x8の優先度マトリクス（数字が大きいほど優先度が高い）
     PRIORITY_MATRIX = [
-        [9, 1, 5, 5, 5, 5, 1, 9],
-        [1, 0, 3, 3, 3, 3, 0, 1],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [1, 0, 3, 3, 3, 3, 0, 1],
-        [9, 1, 5, 5, 5, 5, 1, 9]
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
     ]
 
     def get_valid_positions(self, board):
@@ -276,27 +276,105 @@ class AIPlayer(Player):
         board.place_and_flip_stones(best_position[0], best_position[1], self.color)
         print(f"{self.name} (AI) は {COLUMN_LABELS[best_position[1]]}-{best_position[0]} に石を置きました。")
         return best_position
+    
+
+class EasyAIPlayer(AIPlayer):
+    PRIORITY_MATRIX = [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+
+
+class HardAIPlayer(AIPlayer):
+    """より高度な手を選ぶ難しいAIプレイヤー。"""
+    
+    PRIORITY_MATRIX = [
+        [9, 1, 5, 5, 5, 5, 1, 9],
+        [1, 0, 3, 3, 3, 3, 0, 1],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [5, 3, 4, 4, 4, 4, 3, 5],
+        [1, 0, 3, 3, 3, 3, 0, 1],
+        [9, 1, 5, 5, 5, 5, 1, 9]
+    ]
+
 
 class Game:
     """オセロゲームを管理するクラス。"""
 
-    def __init__(self, is_human_vs_ai=True):
-        """ゲームを初期化し、ボードとプレイヤーを作成する。
-
-        Args:
-            is_human_vs_ai (bool): 人間対AIでプレイするかどうか。
-        """
+    def __init__(self):
+        """ゲームを初期化し、ボードとプレイヤーを作成する。"""
         self.board = Board()
-
-        if is_human_vs_ai:
-            self.players = [
-                HumanPlayer(PLAYER_NAME_BLACK, BLACK),
-                AIPlayer(PLAYER_NAME_WHITE, WHITE)
-            ]
-        else:
+        
+        # プレイヤーの組み合わせを決定する前に、ユーザーに選択肢を提示
+        human_vs_human = input("人間同士でプレイしますか？ (Y/N): ").strip().upper()
+        
+        if human_vs_human == 'Y':            
+            PLAYER_NAME_BLACK = "HumanPlayer1"
+            PLAYER_NAME_WHITE = "HumanPlayer2"
             self.players = [
                 HumanPlayer(PLAYER_NAME_BLACK, BLACK),
                 HumanPlayer(PLAYER_NAME_WHITE, WHITE)
+            ]
+            self.current_player_color = BLACK  # 最初のプレイヤーの色
+            return
+            
+        human_vs_ai = input("AIとプレイしますか？ (Y/N): ").strip().upper()
+        if human_vs_ai == 'Y':
+            # 人間対AIまたはAI対AIの設定を行う
+            print("AIレベルを選んでください: ")
+            print("1: Easy AI (白)")
+            print("2: Hard AI (白)")            
+            
+            choice = input("選択肢の番号を入力してください: ").strip()
+            
+            if choice == '1':
+                self.players = [
+                    HumanPlayer(PLAYER_NAME_BLACK, BLACK),
+                    EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                ]
+            elif choice == '2':
+                self.players = [
+                    HumanPlayer(PLAYER_NAME_BLACK, BLACK),
+                    HardAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                ]
+            else:
+                print("無効な選択です。デフォルトで人間対Easy AIでプレイします。")
+                self.players = [
+                    HumanPlayer(PLAYER_NAME_BLACK, BLACK),
+                    EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                ]
+            self.current_player_color = BLACK  # 最初のプレイヤーの色
+            return
+        
+         
+        # 人間対AIまたはAI対AIの設定を行う
+        print("AIレベルを選んでください: ")
+        print("1: EasyAI vs EasyAI")
+        print("2: EasyAI vs HardAI")            
+        choice = input("選択肢の番号を入力してください: ").strip()
+        if choice == '1':
+            self.players = [
+                EasyAIPlayer(PLAYER_NAME_BLACK, BLACK),
+                EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+            ]
+        elif choice == '2':
+            self.players = [
+                HardAIPlayer(PLAYER_NAME_BLACK, BLACK),
+                EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+            ]
+        else:
+            print("無効な選択です。HardAI対HardAIでプレイします。")
+            self.players = [
+                HardAIPlayer(PLAYER_NAME_BLACK, BLACK),
+                HardAIPlayer(PLAYER_NAME_WHITE, WHITE)
             ]
 
         self.current_player_color = BLACK  # 最初のプレイヤーの色
@@ -349,5 +427,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game(is_human_vs_ai=True)  # 人間 vs AI ゲームを開始
+    game = Game()  # 人間 vs AI ゲームを開始
     game.play()
