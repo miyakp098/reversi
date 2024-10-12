@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 BLACK = 1
 WHITE = -1
 EMPTY = 0
-PLAYER_NAME_BLACK = "Player1(黒)" #TODO: 定数ではない
-PLAYER_NAME_WHITE = "Player2(白)"
+player_name_black = "Player1"
+player_name_white = "Player2"
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
@@ -230,7 +230,7 @@ class AIPlayer(Player):
     """AIプレイヤーを表すクラス。"""
 
     # 8x8の優先度マトリクス（数字が大きいほど優先度が高い）
-    PRIORITY_MATRIX = [
+    priority_matrix = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
@@ -262,7 +262,7 @@ class AIPlayer(Player):
         # 各位置の優先度を確認して、同じ優先度の手をリストに追加
         for position in valid_positions:
             row, col = position
-            priority = self.PRIORITY_MATRIX[row][col]
+            priority = self.priority_matrix[row][col]
             if priority > highest_priority:
                 highest_priority = priority
                 best_positions = [position]  # 新しい最高優先度が見つかったらリストをリセット
@@ -279,7 +279,7 @@ class AIPlayer(Player):
     
 
 class EasyAIPlayer(AIPlayer):
-    PRIORITY_MATRIX = [
+    priority_matrix = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 1, 1, 1, 1, 1, 1, 0],
@@ -294,7 +294,7 @@ class EasyAIPlayer(AIPlayer):
 class HardAIPlayer(AIPlayer):
     """より高度な手を選ぶ難しいAIプレイヤー。"""
     
-    PRIORITY_MATRIX = [
+    priority_matrix = [
         [9, 1, 5, 5, 5, 5, 1, 9],
         [1, 0, 3, 3, 3, 3, 0, 1],
         [5, 3, 4, 4, 4, 4, 3, 5],
@@ -317,17 +317,18 @@ class Game:
         human_vs_human = input("人間同士でプレイしますか？ (Y/N): ").strip().upper()
         
         if human_vs_human == 'Y':            
-            PLAYER_NAME_BLACK = "HumanPlayer1"
-            PLAYER_NAME_WHITE = "HumanPlayer2"
+            self.player_name_black = "HumanPlayer1"
+            self.player_name_white = "HumanPlayer2"
             self.players = [
-                HumanPlayer(PLAYER_NAME_BLACK, BLACK),
-                HumanPlayer(PLAYER_NAME_WHITE, WHITE)
+                HumanPlayer(self.player_name_black, BLACK),
+                HumanPlayer(self.player_name_white, WHITE)
             ]
             self.current_player_color = BLACK  # 最初のプレイヤーの色
             return
             
         human_vs_ai = input("AIとプレイしますか？ (Y/N): ").strip().upper()
         if human_vs_ai == 'Y':
+            self.player_name_black = "HumanPlayer"
             # 人間対AIまたはAI対AIの設定を行う
             print("AIレベルを選んでください: ")
             print("1: Easy AI (白)")
@@ -336,20 +337,23 @@ class Game:
             choice = input("選択肢の番号を入力してください: ").strip()
             
             if choice == '1':
+                self.player_name_white = "EasyAIPlayer"
                 self.players = [
-                    HumanPlayer(PLAYER_NAME_BLACK, BLACK),
-                    EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                    HumanPlayer(self.player_name_black, BLACK),
+                    EasyAIPlayer(self.player_name_white, WHITE)
                 ]
             elif choice == '2':
+                self.player_name_white = "HardAIPlayer"
                 self.players = [
-                    HumanPlayer(PLAYER_NAME_BLACK, BLACK),
-                    HardAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                    HumanPlayer(self.player_name_black, BLACK),
+                    HardAIPlayer(self.player_name_white, WHITE)
                 ]
             else:
                 print("無効な選択です。デフォルトで人間対Easy AIでプレイします。")
+                self.player_name_white = "EasyAIPlayer"
                 self.players = [
-                    HumanPlayer(PLAYER_NAME_BLACK, BLACK),
-                    EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                    HumanPlayer(self.player_name_black, BLACK),
+                    EasyAIPlayer(self.player_name_white, WHITE)
                 ]
             self.current_player_color = BLACK  # 最初のプレイヤーの色
             return
@@ -361,22 +365,27 @@ class Game:
         print("2: EasyAI vs HardAI")            
         choice = input("選択肢の番号を入力してください: ").strip()
         if choice == '1':
+            self.player_name_black = "EasyAIPlayer1"
+            self.player_name_white = "EasyAIPlayer2"
             self.players = [
-                EasyAIPlayer(PLAYER_NAME_BLACK, BLACK),
-                EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                EasyAIPlayer(self.player_name_black, BLACK),
+                EasyAIPlayer(self.player_name_white, WHITE)
             ]
         elif choice == '2':
+            self.player_name_black = "HardAIPlayer"
+            self.player_name_white = "EasyAIPlayer"
             self.players = [
-                HardAIPlayer(PLAYER_NAME_BLACK, BLACK),
-                EasyAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                HardAIPlayer(self.player_name_black, BLACK),
+                EasyAIPlayer(self.player_name_white, WHITE)
             ]
         else:
             print("無効な選択です。HardAI対HardAIでプレイします。")
+            self.player_name_black = "HardAIPlayer1"
+            self.player_name_white = "HardAIPlayer2"
             self.players = [
-                HardAIPlayer(PLAYER_NAME_BLACK, BLACK),
-                HardAIPlayer(PLAYER_NAME_WHITE, WHITE)
+                HardAIPlayer(self.player_name_black, BLACK),
+                HardAIPlayer(self.player_name_white, WHITE)
             ]
-
         self.current_player_color = BLACK  # 最初のプレイヤーの色
 
     def switch_turn(self):
@@ -416,16 +425,15 @@ class Game:
         white_count = np.sum(self.board.board == WHITE)
 
         if black_count > white_count:
-            result = f"勝利: {PLAYER_NAME_BLACK}"
+            result = f"勝利: {self.player_name_black}"
         elif white_count > black_count:
-            result = f"勝利: {PLAYER_NAME_WHITE}"
+            result = f"勝利: {self.player_name_white}"
         else:
             result = "引き分け"
 
-        print(f"最終スコア: {PLAYER_NAME_BLACK} {black_count}, {PLAYER_NAME_WHITE} {white_count}")
+        print(f"最終スコア: {self.player_name_black} {black_count}個, {self.player_name_white} {white_count}個")
         print(result)
 
 
 if __name__ == "__main__":
-    game = Game()  # 人間 vs AI ゲームを開始
-    game.play()
+    Game().play()
