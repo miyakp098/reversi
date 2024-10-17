@@ -7,8 +7,8 @@ BLACK = 1
 WHITE = -1
 EMPTY = 0
 HUMAN_PLAYER_NAME = "HumanPlayer"
-EASY_AI_PLAYER_NAME = "EasyAIPlayer"
-HARD_AI_PLAYER_NAME = "HardAIPlayer"
+EASY_AI_PLAYER_NAME = "CPUEasyPlayer"
+HARD_AI_PLAYER_NAME = "CPUHardPlayer"
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
@@ -227,7 +227,7 @@ class HumanPlayer(Player):
                 print("無効な入力です！もう一度試してください。")
                 
                 
-class AIPlayer(Player):
+class CPUPlayer(Player):
     """AIプレイヤーを表すクラス。"""
 
     # 8x8の優先度マトリクス（数字が大きいほど優先度が高い）
@@ -279,7 +279,7 @@ class AIPlayer(Player):
         return best_position
     
 
-class EasyAIPlayer(AIPlayer):
+class CPUEasyPlayer(CPUPlayer):
     priority_matrix = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 1, 1, 1, 1, 1, 0],
@@ -292,7 +292,7 @@ class EasyAIPlayer(AIPlayer):
     ]
 
 
-class HardAIPlayer(AIPlayer):
+class CPUHardPlayer(CPUPlayer):
     """より高度な手を選ぶ難しいAIプレイヤー。"""
     
     priority_matrix = [
@@ -349,13 +349,13 @@ class Game:
             player_name_white = EASY_AI_PLAYER_NAME
             self.players = [
                 HumanPlayer(player_name_black, BLACK),
-                EasyAIPlayer(player_name_white, WHITE)
+                CPUEasyPlayer(player_name_white, WHITE)
             ]
         elif ai_level == '2':
             player_name_white = HARD_AI_PLAYER_NAME
             self.players = [
                 HumanPlayer(player_name_black, BLACK),
-                HardAIPlayer(player_name_white, WHITE)
+                CPUHardPlayer(player_name_white, WHITE)
             ]
         else:
             print("無効な選択です。デフォルトでEasy AIが選ばれます。")
@@ -369,23 +369,23 @@ class Game:
             player_name_black = f"{EASY_AI_PLAYER_NAME}1"
             player_name_white = f"{EASY_AI_PLAYER_NAME}2"
             self.players = [
-                EasyAIPlayer(player_name_black, BLACK),
-                EasyAIPlayer(player_name_white, WHITE)
+                CPUEasyPlayer(player_name_black, BLACK),
+                CPUEasyPlayer(player_name_white, WHITE)
             ]
         elif ai_level == '2':
             player_name_black = HARD_AI_PLAYER_NAME
             player_name_white = EASY_AI_PLAYER_NAME
             self.players = [
-                HardAIPlayer(player_name_black, BLACK),
-                EasyAIPlayer(player_name_white, WHITE)
+                CPUHardPlayer(player_name_black, BLACK),
+                CPUEasyPlayer(player_name_white, WHITE)
             ]
         else:
             print("無効な選択です。デフォルトでHard AI同士が選ばれます。")
             player_name_black = f"{HARD_AI_PLAYER_NAME}2"
             player_name_white = f"{HARD_AI_PLAYER_NAME}2"
             self.players = [
-                HardAIPlayer(player_name_black, BLACK),
-                HardAIPlayer(player_name_white, WHITE)
+                CPUHardPlayer(player_name_black, BLACK),
+                CPUHardPlayer(player_name_white, WHITE)
             ]            
 
     def switch_turn(self):
