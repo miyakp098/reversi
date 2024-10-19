@@ -69,20 +69,22 @@ class Board:
         print(" ".join(COLUMN_LABELS))
         
     def find_valid_positions(self, current_color):
-        """現在のプレイヤーが置ける有効な手を全て見つける。
+        """現在のプレイヤーが置ける有効な手を全て見つけ、ひっくり返せる石の数も格納する。
 
         Args:
             current_color (int): 現在のプレイヤーの色。
 
         Returns:
-            list: 有効な手の座標リスト。
+            dict: 有効な手の座標とひっくり返せる石の数の辞書。
         """
-        valid_positions = []
+        valid_positions = {}
         for row in range(8):
             for col in range(8):
-                if self.can_flip(row, col, current_color):
-                    valid_positions.append((row, col))
+                flip_count = self.get_flip_count(row, col, current_color)
+                if flip_count > 0:
+                    valid_positions[(row, col)] = flip_count
         return valid_positions
+
 
     def place_and_flip_stones(self, row, col, current_color):
         """指定した位置に石を置き、挟む石を反転させる。
@@ -95,7 +97,7 @@ class Board:
         Returns:
             bool: 石を置いて反転できた場合はTrue、できなかった場合はFalse。
         """
-        stones_to_flip = self.get_stones_to_flip(row, col, current_color)
+        stones_to_flip, _ = self.get_stones_to_flip(row, col, current_color)
 
         if not stones_to_flip:
             return False
@@ -107,8 +109,8 @@ class Board:
         return True
     
     
-    def can_flip(self, row, col, current_color):
-        """指定した位置で石を挟むことができるか確認する。
+    def get_flip_count(self, row, col, current_color):
+        """指定した位置で石を挟むことができるか確認し、ひっくり返せる石の数を返す。
 
         Args:
             row (int): 行のインデックス。
@@ -116,14 +118,16 @@ class Board:
             current_color (int): 現在のプレイヤーの色。
 
         Returns:
-            bool: 石を挟むことができればTrue、そうでなければFalse。
+            int: ひっくり返せる石の数。挟めない場合は0を返す。
         """
         if self.board[row][col] != EMPTY:
-            return False
-        return len(self.get_stones_to_flip(row, col, current_color)) > 0
+            return 0
+
+        _, flip_count = self.get_stones_to_flip(row, col, current_color)
+        return flip_count  # ひっくり返せる石の数を返す
     
     def get_stones_to_flip(self, row, col, current_color):
-        """指定した位置で挟むことができる石のリストを取得。
+        """指定した位置で挟むことができる石のリストとその数を取得。
 
         Args:
             row (int): 行のインデックス。
@@ -132,6 +136,7 @@ class Board:
 
         Returns:
             list: 挟むことができる石の座標リスト。
+            int: ひっくり返せる石の数。
         """
         opponent_color = -current_color
         stones_to_flip = []
@@ -150,7 +155,7 @@ class Board:
             if self.is_on_board(n_row, n_col) and self.board[n_row][n_col] == current_color and temp_flip:
                 stones_to_flip.extend(temp_flip)
 
-        return stones_to_flip
+        return stones_to_flip, len(stones_to_flip)
     
     def is_on_board(self, row, col):
         """指定した座標がボードの範囲内かどうかをチェック。
@@ -285,15 +290,52 @@ class CPUEasyPlayer(CPUPlayer):
 
 class CPUHardPlayer(CPUPlayer):
     priority_matrix = [
-        [9, 1, 5, 5, 5, 5, 1, 9],
-        [1, 0, 3, 3, 3, 3, 0, 1],
+        [9, 4, 5, 5, 5, 5, 4, 9],
+        [4, 0, 3, 3, 3, 3, 0, 4],
         [5, 3, 4, 4, 4, 4, 3, 5],
         [5, 3, 4, 4, 4, 4, 3, 5],
         [5, 3, 4, 4, 4, 4, 3, 5],
         [5, 3, 4, 4, 4, 4, 3, 5],
-        [1, 0, 3, 3, 3, 3, 0, 1],
-        [9, 1, 5, 5, 5, 5, 1, 9]
+        [4, 0, 3, 3, 3, 3, 0, 4],
+        [9, 4, 5, 5, 5, 5, 4, 9]
     ]
+    
+    
+class MaxFlipperCPU(CPUPlayer):
+    
+    def get_valid_positions(self, board):
+        """CPUプレイヤーの手を取得する。
+
+        Args:
+            board (Board): ゲームボード。
+
+        Returns:
+            tuple: CPUが選択した座標 (row, col)。
+        """
+        valid_positions = board.find_valid_positions(self.color)
+
+        if not valid_positions:
+            return None, None
+
+        # より多くひっくり返せる位置を選ぶためのリストを用意
+        best_positions = []
+        max_flip_count = -1
+
+        # 各位置のひっくり返せる石の数を確認して、同じ最大値の手をリストに追加
+        for position, flip_count in valid_positions.items():  # dictからpositionとflip_countを取得
+            if flip_count > max_flip_count:
+                max_flip_count = flip_count
+                best_positions = [position]  # 新しい最大ひっくり返せる数が見つかったらリストをリセット
+            elif flip_count == max_flip_count:
+                best_positions.append(position)  # 同じ最大ひっくり返せる数ならリストに追加
+
+        # 複数の最大ひっくり返せる数の手からランダムに選ぶ
+        best_position = random.choice(best_positions)
+
+        # 選択された手をボードに反映
+        board.place_and_flip_stones(best_position[0], best_position[1], self.color)
+        print(f"{self.name} (CPU) は {COLUMN_LABELS[best_position[1]]}-{best_position[0]} に石を置きました。")
+        return best_position
 
 
 class Game:
@@ -308,7 +350,7 @@ class Game:
 
     def set_players(self):
         """プレイヤーの設定を行う。"""
-        game_mode = input("ゲームモードを選んでください:\n1: 人間同士\n2: 人間対CPU\n3: CPU対CPU\n選択肢の番号を入力してください: ").strip()
+        game_mode = input("ゲームモードを選んでください:\n1: 人間対人間\n2: 人間対CPU\n3: CPU対CPU\n選択肢の番号を入力してください: ").strip()
 
         if game_mode == '1':
             self.setup_human_vs_human()
@@ -352,7 +394,7 @@ class Game:
 
     def setup_cpu_vs_cpu(self):
         """CPU同士のプレイヤーを設定する。"""
-        cpu_level = input(f"CPUレベルを選んでください: \n1: CPU Easy\n2: CPU Hard\n選択肢の番号を入力してください: ").strip()
+        cpu_level = input(f"CPUレベルを選んでください: \n1: CPU Easy 対 CPU Easy\n2: CPU Hard 対 CPU Easy\n選択肢の番号を入力してください: ").strip()
 
         if cpu_level == '1':
             player_name_black = f"{CPU_EASY_PLAYER_NAME}1"
@@ -423,7 +465,7 @@ class Game:
         else:
             result = "引き分け"
 
-        print(f"最終スコア: {player_name_black} {black_count}個, {player_name_white} {white_count}個")
+        print(f"最終スコア: 黒: {player_name_black} {black_count}個, 白: {player_name_white} {white_count}個")
         print(result)
 
 
