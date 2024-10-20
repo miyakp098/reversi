@@ -238,6 +238,29 @@ class CPUPlayer(Player):
     # 8x8の優先度マトリクス（数字が大きいほど優先度が高い）
     priority_matrix = np.zeros((8, 8), dtype=int)
 
+    def select_best_position(self, valid_positions):
+        """最も優先度の高い手を選ぶ。
+
+        Args:
+            valid_positions (list of tuple): 有効な手のリスト
+
+        Returns:
+            tuple: 最も優先度の高い手
+        """
+        best_positions = []
+        highest_priority = -1
+
+        for position in valid_positions:
+            row, col = position
+            priority = self.priority_matrix[row][col]
+            if priority > highest_priority:
+                highest_priority = priority
+                best_positions = [position]
+            elif priority == highest_priority:
+                best_positions.append(position)
+
+        return random.choice(best_positions)
+
     def get_valid_positions(self, board):
         """CPUプレイヤーの手を取得する。
 
@@ -252,28 +275,11 @@ class CPUPlayer(Player):
         if not valid_positions:
             return None, None
 
-        # 優先度が最も高い位置を選ぶためのリストを用意
-        best_positions = []
-        highest_priority = -1
-
-        # 各位置の優先度を確認して、同じ優先度の手をリストに追加
-        for position in valid_positions:
-            row, col = position
-            priority = self.priority_matrix[row][col]
-            if priority > highest_priority:
-                highest_priority = priority
-                best_positions = [position]  # 新しい最高優先度が見つかったらリストをリセット
-            elif priority == highest_priority:
-                best_positions.append(position)  # 同じ優先度ならリストに追加
-
-        # 複数の最高優先度の手からランダムに選ぶ
-        best_position = random.choice(best_positions)
-
-        # 選択された手をボードに反映
+        best_position = self.select_best_position(valid_positions)
         board.place_and_flip_stones(best_position[0], best_position[1], self.color)
         print(f"{self.name} (CPU) は {COLUMN_LABELS[best_position[1]]}-{best_position[0]} に石を置きました。")
         return best_position
-    
+
 
 class CPUEasyPlayer(CPUPlayer):
     priority_matrix = [
@@ -299,8 +305,8 @@ class CPUHardPlayer(CPUPlayer):
         [4, 0, 3, 3, 3, 3, 0, 4],
         [9, 4, 5, 5, 5, 5, 4, 9]
     ]
-    
-    
+
+
 class MaxFlipperCPU(CPUPlayer):
     
     def get_valid_positions(self, board):
@@ -350,17 +356,20 @@ class Game:
 
     def set_players(self):
         """プレイヤーの設定を行う。"""
-        game_mode = input("ゲームモードを選んでください:\n1: 人間対人間\n2: 人間対CPU\n3: CPU対CPU\n選択肢の番号を入力してください: ").strip()
+        while True:
+            game_mode = input("ゲームモードを選んでください:\n1: 人間対人間\n2: 人間対CPU\n3: CPU対CPU\n選択肢の番号を入力してください: ").strip()
 
-        if game_mode == '1':
-            self.setup_human_vs_human()
-        elif game_mode == '2':
-            self.setup_human_vs_cpu()
-        elif game_mode == '3':
-            self.setup_cpu_vs_cpu()
-        else:
-            print("無効な選択です。デフォルトでCPU対CPUのモードになります。")
-            self.setup_cpu_vs_cpu()
+            if game_mode == '1':
+                self.setup_human_vs_human()
+                break
+            elif game_mode == '2':
+                self.setup_human_vs_cpu()
+                break
+            elif game_mode == '3':
+                self.setup_cpu_vs_cpu()
+                break
+            else:
+                print("無効な選択です。もう一度選んでください。")
 
     def setup_human_vs_human(self):
         """人間同士のプレイヤーを設定する。"""
@@ -373,51 +382,50 @@ class Game:
 
     def setup_human_vs_cpu(self):
         """人間対CPUのプレイヤーを設定する。"""
-        player_name_black = "HumanPlayer"
-        cpu_level = input("CPUレベルを選んでください: \n1: CPU Easy\n2: CPU Hard\n選択肢の番号を入力してください: ").strip()
+        while True:
+            player_name_black = "HumanPlayer"
+            cpu_level = input("CPUレベルを選んでください: \n1: CPU Easy\n2: CPU Hard\n選択肢の番号を入力してください: ").strip()
 
-        if cpu_level == '1':
-            player_name_white = CPU_EASY_PLAYER_NAME
-            self.players = [
-                HumanPlayer(player_name_black, BLACK),
-                CPUEasyPlayer(player_name_white, WHITE)
-            ]
-        elif cpu_level == '2':
-            player_name_white = CPU_HARD_PLAYER_NAME
-            self.players = [
-                HumanPlayer(player_name_black, BLACK),
-                CPUHardPlayer(player_name_white, WHITE)
-            ]
-        else:
-            print("無効な選択です。デフォルトでCPU Easyが選ばれます。")
-            self.setup_human_vs_cpu()
+            if cpu_level == '1':
+                player_name_white = CPU_EASY_PLAYER_NAME
+                self.players = [
+                    HumanPlayer(player_name_black, BLACK),
+                    CPUEasyPlayer(player_name_white, WHITE)
+                ]
+                break
+            elif cpu_level == '2':
+                player_name_white = CPU_HARD_PLAYER_NAME
+                self.players = [
+                    HumanPlayer(player_name_black, BLACK),
+                    CPUHardPlayer(player_name_white, WHITE)
+                ]
+                break
+            else:
+                print("無効な選択です。もう一度選んでください。")
 
     def setup_cpu_vs_cpu(self):
         """CPU同士のプレイヤーを設定する。"""
-        cpu_level = input(f"CPUレベルを選んでください: \n1: CPU Easy 対 CPU Easy\n2: CPU Hard 対 CPU Easy\n選択肢の番号を入力してください: ").strip()
+        while True:
+            cpu_level = input(f"CPUレベルを選んでください: \n1: CPU Easy 対 CPU Easy\n2: CPU Hard 対 CPU Easy\n選択肢の番号を入力してください: ").strip()
 
-        if cpu_level == '1':
-            player_name_black = f"{CPU_EASY_PLAYER_NAME}1"
-            player_name_white = f"{CPU_EASY_PLAYER_NAME}2"
-            self.players = [
-                CPUEasyPlayer(player_name_black, BLACK),
-                CPUEasyPlayer(player_name_white, WHITE)
-            ]
-        elif cpu_level == '2':
-            player_name_black = CPU_HARD_PLAYER_NAME
-            player_name_white = CPU_EASY_PLAYER_NAME
-            self.players = [
-                CPUHardPlayer(player_name_black, BLACK),
-                CPUEasyPlayer(player_name_white, WHITE)
-            ]
-        else:
-            print("無効な選択です。デフォルトでHard CPU同士が選ばれます。")
-            player_name_black = f"{CPU_HARD_PLAYER_NAME}2"
-            player_name_white = f"{CPU_HARD_PLAYER_NAME}2"
-            self.players = [
-                CPUHardPlayer(player_name_black, BLACK),
-                CPUHardPlayer(player_name_white, WHITE)
-            ]            
+            if cpu_level == '1':
+                player_name_black = f"{CPU_EASY_PLAYER_NAME}1"
+                player_name_white = f"{CPU_EASY_PLAYER_NAME}2"
+                self.players = [
+                    CPUEasyPlayer(player_name_black, BLACK),
+                    CPUEasyPlayer(player_name_white, WHITE)
+                ]
+                break
+            elif cpu_level == '2':
+                player_name_black = CPU_HARD_PLAYER_NAME
+                player_name_white = CPU_EASY_PLAYER_NAME
+                self.players = [
+                    CPUHardPlayer(player_name_black, BLACK),
+                    CPUEasyPlayer(player_name_white, WHITE)
+                ]
+                break
+            else:
+                print("無効な選択です。もう一度選んでください。")     
 
     def switch_turn(self):
         """ターンを交代する。"""
