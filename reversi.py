@@ -9,7 +9,6 @@ EMPTY = 0
 HUMAN_PLAYER_NAME = "HumanPlayer"
 POSITION_PRIORITY_EASY_CPU_NAME = "EasyPosCPU"
 POSITION_PRIORITY_HARD_CPU_NAME = "HardPosCPU"
-FLIP_PRIORITY_CPU_NAME = "FlipMaxCPU"
 COLUMN_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
 
 DIRECTIONS = np.array([
@@ -308,43 +307,6 @@ class PositionPriorityHardCPU(CPUPlayer):
     ]
 
 
-class FlipPriorityCPU(CPUPlayer):
-    
-    def get_valid_positions(self, board):
-        """CPUプレイヤーの手を取得する。
-
-        Args:
-            board (Board): ゲームボード。
-
-        Returns:
-            tuple: CPUが選択した座標 (row, col)。
-        """
-        valid_positions = board.find_valid_positions(self.color)
-
-        if not valid_positions:
-            return None, None
-
-        # より多くひっくり返せる位置を選ぶためのリストを用意
-        best_positions = []
-        max_flip_count = -1
-
-        # 各位置のひっくり返せる石の数を確認して、同じ最大値の手をリストに追加
-        for position, flip_count in valid_positions.items():  # dictからpositionとflip_countを取得
-            if flip_count > max_flip_count:
-                max_flip_count = flip_count
-                best_positions = [position]  # 新しい最大ひっくり返せる数が見つかったらリストをリセット
-            elif flip_count == max_flip_count:
-                best_positions.append(position)  # 同じ最大ひっくり返せる数ならリストに追加
-
-        # 複数の最大ひっくり返せる数の手からランダムに選ぶ
-        best_position = random.choice(best_positions)
-
-        # 選択された手をボードに反映
-        board.place_and_flip_stones(best_position[0], best_position[1], self.color)
-        print(f"{self.name} (CPU) は {COLUMN_LABELS[best_position[1]]}-{best_position[0]} に石を置きました。")
-        return best_position
-
-
 class Game:
     """オセロゲームを管理するクラス。"""
 
@@ -420,7 +382,6 @@ class Game:
                 f"CPUレベルを選んでください:\n"
                 f"1: {POSITION_PRIORITY_EASY_CPU_NAME}\n"
                 f"2: {POSITION_PRIORITY_HARD_CPU_NAME}\n"
-                f"3: {FLIP_PRIORITY_CPU_NAME}\n"
                 f"選択肢の番号を入力してください: "
             ).strip()
 
@@ -429,8 +390,6 @@ class Game:
                 return POSITION_PRIORITY_EASY_CPU_NAME, PositionPriorityEasyCPU
             elif cpu_level == '2':
                 return POSITION_PRIORITY_HARD_CPU_NAME, PositionPriorityHardCPU
-            elif cpu_level == '3':
-                return FLIP_PRIORITY_CPU_NAME, FlipPriorityCPU
             else:
                 print("無効な選択です。もう一度選んでください。")
 
