@@ -236,7 +236,10 @@ class CPUPlayer(Player):
     """CPUプレイヤーを表すクラス。"""
 
     # 8x8の優先度マトリクス（数字が大きいほど優先度が高い）
-    priority_matrix = np.zeros((8, 8), dtype=int)
+    def __init__(self, name, color):
+        super().__init__(name, color)
+        # 各インスタンスごとに空の優先度マトリクスを初期化
+        self.priority_matrix = np.zeros((8, 8), dtype=int)
 
     def select_best_position(self, valid_positions):
         """最も優先度の高い手を選ぶ。
@@ -282,29 +285,33 @@ class CPUPlayer(Player):
 
 
 class PositionPriorityEasyCPU(CPUPlayer):
-    priority_matrix = [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0]
-    ]
+    def __init__(self, name, color):
+        super().__init__(name, color)
+        self.priority_matrix = [
+            [0, 1, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 0]
+        ]
 
 
 class PositionPriorityHardCPU(CPUPlayer):
-    priority_matrix = [
-        [9, 4, 5, 5, 5, 5, 4, 9],
-        [4, 0, 3, 3, 3, 3, 0, 4],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [5, 3, 4, 4, 4, 4, 3, 5],
-        [4, 0, 3, 3, 3, 3, 0, 4],
-        [9, 4, 5, 5, 5, 5, 4, 9]
-    ]
+    def __init__(self, name, color):
+        super().__init__(name, color)
+        self.priority_matrix = [
+            [9, 4, 5, 5, 5, 5, 4, 9],
+            [4, 0, 3, 3, 3, 3, 0, 4],
+            [5, 3, 4, 4, 4, 4, 3, 5],
+            [5, 3, 4, 4, 4, 4, 3, 5],
+            [5, 3, 4, 4, 4, 4, 3, 5],
+            [5, 3, 4, 4, 4, 4, 3, 5],
+            [4, 0, 3, 3, 3, 3, 0, 4],
+            [9, 4, 5, 5, 5, 5, 4, 9]
+        ]
 
 
 class Game:
